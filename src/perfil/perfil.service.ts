@@ -1,26 +1,58 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+
+import { Perfil } from './entities/perfil.entity';
 import { CreatePerfilDto } from './dto/create-perfil.dto';
 import { UpdatePerfilDto } from './dto/update-perfil.dto';
 
 @Injectable()
 export class PerfilService {
-  create(createPerfilDto: CreatePerfilDto) {
-    return 'This action adds a new perfil';
+
+  constructor(
+    @InjectRepository(Perfil)
+    private perfilRepository: Repository<Perfil>,
+  ) {}
+
+  // Crear perfil
+  async create(createPerfilDto: CreatePerfilDto): Promise<Perfil> {
+    const perfil = this.perfilRepository.create(createPerfilDto);
+    return await this.perfilRepository.save(perfil);
   }
 
-  findAll() {
-    return `This action returns all perfil`;
+  // Listar perfiles
+  async findAll(): Promise<Perfil[]> {
+    return await this.perfilRepository.find({
+      relations: ['usuario'],
+    });
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} perfil`;
+  // Buscar perfil por ID
+  async findOne(id: number): Promise<Perfil> {
+    const perfil = await this.perfilRepository.findOne({
+      where: { id },
+      relations: ['usuario'],
+    });
+
+    if (!perfil) {
+      throw new NotFoundException(`Perfil con id ${id} no encontrado`);
+    }
+
+    return perfil;
   }
 
-  update(id: number, updatePerfilDto: UpdatePerfilDto) {
-    return `This action updates a #${id} perfil`;
+  // Actualizar perfil
+  async update(id: number, updatePerfilDto: UpdatePerfilDto): Promise<Perfil> {
+    const perfil = await this.findOne(id);
+
+    Object.assign(perfil, updatePerfilDto);
+
+    return await this.perfilRepository.save(perfil);
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} perfil`;
+  // Eliminar perfil
+  async remove(id: number) {
+    const perfil = await this.findOne(id);
+    return await this.perfilRepository.remove(perfil);
   }
 }

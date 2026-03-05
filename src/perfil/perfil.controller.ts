@@ -1,9 +1,9 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe } from '@nestjs/common';
 import { PerfilService } from './perfil.service';
 import { CreatePerfilDto } from './dto/create-perfil.dto';
 import { UpdatePerfilDto } from './dto/update-perfil.dto';
 
-@Controller('perfil')
+@Controller('perfiles')
 export class PerfilController {
   constructor(private readonly perfilService: PerfilService) {}
 
@@ -18,17 +18,20 @@ export class PerfilController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.perfilService.findOne(+id);
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.perfilService.findOne(id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updatePerfilDto: UpdatePerfilDto) {
-    return this.perfilService.update(+id, updatePerfilDto);
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updatePerfilDto: UpdatePerfilDto,
+  ) {
+    return this.perfilService.update(id, updatePerfilDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.perfilService.remove(+id);
+  remove(@Param('id', ParseIntPipe) id: number) {
+    return this.perfilService.remove(id);
   }
 }

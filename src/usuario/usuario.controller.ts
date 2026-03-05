@@ -5,6 +5,7 @@ import { UpdateUsuarioDto } from './dto/update-usuario.dto';
 
 @Controller('usuario')
 export class UsuarioController {
+
   constructor(private readonly usuarioService: UsuarioService) {}
 
   @Post()
@@ -23,7 +24,10 @@ export class UsuarioController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateUsuarioDto: UpdateUsuarioDto) {
+  update(
+    @Param('id') id: string,
+    @Body() updateUsuarioDto: UpdateUsuarioDto
+  ) {
     return this.usuarioService.update(+id, updateUsuarioDto);
   }
 
@@ -31,4 +35,5 @@ export class UsuarioController {
   remove(@Param('id') id: string) {
     return this.usuarioService.remove(+id);
   }
+
 }

@@ -1,26 +1,53 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+
+import { Director } from './entities/director.entity';
 import { CreateDirectorDto } from './dto/create-director.dto';
 import { UpdateDirectorDto } from './dto/update-director.dto';
 
 @Injectable()
 export class DirectorService {
-  create(createDirectorDto: CreateDirectorDto) {
-    return 'This action adds a new director';
+
+  constructor(
+    @InjectRepository(Director)
+    private directorRepository: Repository<Director>,
+  ) {}
+
+  async create(createDirectorDto: CreateDirectorDto): Promise<Director> {
+    const director = this.directorRepository.create(createDirectorDto);
+    return await this.directorRepository.save(director);
   }
 
-  findAll() {
-    return `This action returns all director`;
+  async findAll(): Promise<Director[]> {
+    return await this.directorRepository.find({
+      relations: ['peliculas'],
+    });
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} director`;
+  async findOne(id: number): Promise<Director> {
+    const director = await this.directorRepository.findOne({
+      where: { id },
+      relations: ['peliculas'],
+    });
+
+    if (!director) {
+      throw new NotFoundException(`Director con ID ${id} no encontrado`);
+    }
+
+    return director;
   }
 
-  update(id: number, updateDirectorDto: UpdateDirectorDto) {
-    return `This action updates a #${id} director`;
+  async update(id: number, updateDirectorDto: UpdateDirectorDto): Promise<Director> {
+    const director = await this.findOne(id);
+
+    Object.assign(director, updateDirectorDto);
+
+    return await this.directorRepository.save(director);
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} director`;
+  async remove(id: number): Promise<void> {
+    const director = await this.findOne(id);
+    await this.directorRepository.remove(director);
   }
 }
