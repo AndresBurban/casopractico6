@@ -1,5 +1,7 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToMany, JoinTable } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToMany, JoinTable, ManyToOne } from 'typeorm';
 import { Genero } from '../../genero/entities/genero.entity';
+import { Director } from '../../director/entities/director.entity';
+import { Usuario } from '../../usuario/entities/usuario.entity';
 
 @Entity()
 export class Pelicula {
@@ -16,8 +18,17 @@ export class Pelicula {
   @Column()
   sinopsis: string;
 
-  @ManyToMany(() => Genero, genero => genero.peliculas)
+  @Column()
+  anioEstreno: number;
+
+  @ManyToOne(() => Genero, (genero) => genero.peliculas, { nullable: false })
+  genero: Genero;
+
+  @ManyToOne(() => Director, (director) => director.peliculas, { nullable: false })
+  director: Director;
+
+  @ManyToMany(() => Usuario, (usuario) => usuario.peliculasFavoritas)
   @JoinTable()
-  generos: Genero[];
+  usuariosFavoritos: Usuario[];
 
 }

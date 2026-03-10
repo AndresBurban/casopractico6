@@ -1,10 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { CreatePeliculaDto } from './dto/create-pelicula.dto';
 import { UpdatePeliculaDto } from './dto/update-pelicula.dto';
 import { Pelicula } from './entities/pelicula.entity';
 import { Genero } from '../genero/entities/genero.entity';
+import { Director } from '../director/entities/director.entity';
 
 @Injectable()
 export class PeliculaService {
@@ -13,27 +14,38 @@ export class PeliculaService {
     private readonly peliculaRepository: Repository<Pelicula>,
     @InjectRepository(Genero)
     private readonly generoRepository: Repository<Genero>,
-  ) {}
+    @InjectRepository(Director)
+    private readonly directorRepository: Repository<Director>,
+  ) { }
 
   async create(createPeliculaDto: CreatePeliculaDto): Promise<Pelicula> {
-    const { generoIds, ...peliculaData } = createPeliculaDto;
-    const pelicula = this.peliculaRepository.create(peliculaData);
+    const { generoId, directorId, ...peliculaData } = createPeliculaDto;
 
-    if (generoIds && generoIds.length > 0) {
-      pelicula.generos = await this.generoRepository.findBy({ id: In(generoIds) });
-    }
+    const genero = await this.generoRepository.findOneBy({ id: generoId });
+    if (!genero) throw new NotFoundException(`Género con ID ${generoId} no encontrado`);
+
+    const director = await this.directorRepository.findOneBy({ id: directorId });
+    if (!director) throw new NotFoundException(`Director con ID ${directorId} no encontrado`);
+
+    const pelicula = this.peliculaRepository.create({
+      ...peliculaData,
+      genero,
+      director,
+    });
 
     return await this.peliculaRepository.save(pelicula);
   }
 
   async findAll(): Promise<Pelicula[]> {
-    return await this.peliculaRepository.find({ relations: ['generos'] });
+    return await this.peliculaRepository.find({
+      relations: ['genero', 'director', 'usuariosFavoritos']
+    });
   }
 
   async findOne(id: number): Promise<Pelicula> {
     const pelicula = await this.peliculaRepository.findOne({
       where: { id },
-      relations: ['generos'],
+      relations: ['genero', 'director', 'usuariosFavoritos'],
     });
     if (!pelicula) {
       throw new NotFoundException(`Película con ID ${id} no encontrada`);
@@ -42,12 +54,21 @@ export class PeliculaService {
   }
 
   async update(id: number, updatePeliculaDto: UpdatePeliculaDto): Promise<Pelicula> {
-    const { generoIds, ...peliculaData } = updatePeliculaDto;
+    const { generoId, directorId, ...peliculaData } = updatePeliculaDto;
     const pelicula = await this.findOne(id);
+
     this.peliculaRepository.merge(pelicula, peliculaData);
 
-    if (generoIds) {
-      pelicula.generos = await this.generoRepository.findBy({ id: In(generoIds) });
+    if (generoId) {
+      const genero = await this.generoRepository.findOneBy({ id: generoId });
+      if (!genero) throw new NotFoundException(`Género con ID ${generoId} no encontrado`);
+      pelicula.genero = genero;
+    }
+
+    if (directorId) {
+      const director = await this.directorRepository.findOneBy({ id: directorId });
+      if (!director) throw new NotFoundException(`Director con ID ${directorId} no encontrado`);
+      pelicula.director = director;
     }
 
     return await this.peliculaRepository.save(pelicula);

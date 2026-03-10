@@ -1,7 +1,7 @@
 
-
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToMany } from 'typeorm';
 import { Perfil } from '../../perfil/entities/perfil.entity';
+import { Pelicula } from '../../pelicula/entities/pelicula.entity';
 
 @Entity()
 export class Usuario {
@@ -17,5 +17,8 @@ export class Usuario {
 
   @OneToMany(() => Perfil, perfil => perfil.usuario)
   perfiles: Perfil[];
+
+  @ManyToMany(() => Pelicula, (pelicula) => pelicula.usuariosFavoritos)
+  peliculasFavoritas: Pelicula[];
 
 }
